@@ -19,7 +19,7 @@ jobs:
           sudo apt-get install -y \
             coreutils quilt parted qemu-user-static debootstrap zerofree zip \
             dosfstools libarchive-tools libcap2-bin grep rsync xz-utils file git curl bc \
-            arch-test qemu-user-binfmt
+            arch-test
 
       # Step 2: Prepare binfmt_misc for ARM emulation
       - name: Setup binfmt_misc for ARM
