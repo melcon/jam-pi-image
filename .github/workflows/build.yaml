@@ -1,0 +1,22 @@
+name: Build Custom Raspberry Pi Image
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Build Custom Pi Image
+        uses: usimd/pi-gen-action@v1.9.0  # Uses the official pi-gen tool[reference:5]
+        id: image_build
+        with:
+          image-name: jamulus-pi          # Name of your image
+          stage-list: stage2              # Tells pi-gen to ONLY run your custom stage
+          disable-first-boot-user-rename: 1  # Keeps the default 'pi' user[reference:6]
+          enable-ssh: 1                  # Enables SSH for headless access[reference:7]

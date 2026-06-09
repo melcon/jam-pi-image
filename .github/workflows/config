@@ -1,0 +1,4 @@
+IMG_NAME='my-jamulus-image'
+FIRST_USER_NAME=pi
+FIRST_USER_PASS=jamulus
+ENABLE_SSH=1

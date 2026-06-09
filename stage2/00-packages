@@ -1,0 +1,35 @@
+# Base system & LXDE desktop
+lxde-core
+lightdm
+xserver-xorg-video-dummy
+xserver-xorg-input-all
+
+# VNC & noVNC
+tigervnc-standalone-server
+novnc
+websockify
+
+# Audio (JACK + ALSA utilities)
+jackd2
+qjackctl
+alsa-utils
+alsa-tools
+#pipewire-audio       # optional, but helps with USB interfaces
+#pipewire-jack
+
+## Jamulus dependencies (build and runtime)
+#build-essential
+#qt5-qmake
+#qtdeclarative5-dev
+#qt5-default
+git
+
+# Utilities
+#network-manager      # optional, for easier Wi-Fi management if you re-enable it
+wget
+curl
+unzip
+tmux
+htop
+vim
+mtr-tiny
