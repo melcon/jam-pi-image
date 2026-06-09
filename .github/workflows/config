@@ -2,3 +2,10 @@ IMG_NAME='my-jamulus-image'
 FIRST_USER_NAME=pi
 FIRST_USER_PASS=jamulus
 ENABLE_SSH=1
+# Timezone (list from /usr/share/zoneinfo)
+TIMEZONE_DEFAULT="America/Sao_Paulo"   # change to your region/city
+# Keyboard layout
+KEYBOARD_KEYMAP="us"               # common: us, de, fr, gb, etc.
+KEYBOARD_LAYOUT="English (US)"     # human-readable name (optional)
+# Optional: set system locale (default en_GB.UTF-8)
+LOCALE_DEFAULT="en_US.UTF-8"

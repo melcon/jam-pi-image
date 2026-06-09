@@ -12,11 +12,42 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Build Custom Pi Image
-        uses: usimd/pi-gen-action@v1.9.0  # Uses the official pi-gen tool[reference:5]
-        id: image_build
+      - name: Install pi-gen dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y coreutils quilt parted qemu-user-static debootstrap zip unzip systemd-container dosfstools binfmt-support fakeroot
+
+      - name: Clone pi-gen
+        run: git clone --depth 1 https://github.com/RPi-Distro/pi-gen.git
+
+      - name: Copy custom config and stage2
+        run: |
+          # Copy your config file if it exists in the repo root
+          if [ -f config ]; then cp config pi-gen/config; fi
+          # Copy your entire stage2 folder
+          cp -r stage2 pi-gen/
+
+      - name: Build the image
+        run: |
+          cd pi-gen
+          # Set environment variables (optional, can also be in config file)
+          #export IMG_NAME=my-jamulus-image
+          #export FIRST_USER_NAME=pi
+          #export FIRST_USER_PASS=raspberry
+          #export ENABLE_SSH=1
+          sudo bash build.sh
+
+      - name: Upload image
+        uses: actions/upload-artifact@v4
         with:
-          image-name: jamulus-pi          # Name of your image
-          stage-list: stage2              # Tells pi-gen to ONLY run your custom stage
-          disable-first-boot-user-rename: 1  # Keeps the default 'pi' user[reference:6]
-          enable-ssh: 1                  # Enables SSH for headless access[reference:7]
+          name: raspberry-pi-image
+          path: pi-gen/deploy/*.img
+
+#      - name: Build Custom Pi Image
+#        uses: usimd/pi-gen-action@v1.9.0  # Uses the official pi-gen tool[reference:5]
+#        id: image_build
+#        with:
+#          image-name: jamulus-pi          # Name of your image
+#          stage-list: stage2              # Tells pi-gen to ONLY run your custom stage
+#          disable-first-boot-user-rename: 1  # Keeps the default 'pi' user[reference:6]
+#          enable-ssh: 1                  # Enables SSH for headless access[reference:7]
