@@ -12,21 +12,41 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # Step 1: Install all build dependencies for pi-gen
       - name: Install pi-gen dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y coreutils quilt parted qemu-user-static debootstrap zip unzip systemd-container dosfstools binfmt-support fakeroot
+          sudo apt-get install -y \
+            coreutils quilt parted qemu-user-static debootstrap zerofree zip \
+            dosfstools libarchive-tools libcap2-bin grep rsync xz-utils file git curl bc \
+            arch-test qemu-user-binfmt
 
+      # Step 2: Prepare binfmt_misc for ARM emulation
+      - name: Setup binfmt_misc for ARM
+        run: |
+          # Load the binfmt_misc kernel module if it's not already loaded
+          sudo modprobe binfmt_misc || true
+          # Mount the binfmt_misc filesystem if it's not already mounted
+          if ! mountpoint -q /proc/sys/fs/binfmt_misc; then
+            sudo mount binfmt_misc -t binfmt_misc /proc/sys/fs/binfmt_misc
+          fi
+          # Register the ARM interpreters with binfmt_misc
+          sudo update-binfmts --enable qemu-arm 2>/dev/null || true
+          sudo update-binfmts --enable qemu-aarch64 2>/dev/null || true
+
+      # Step 3: Clone pi-gen
       - name: Clone pi-gen
         run: git clone --depth 1 https://github.com/RPi-Distro/pi-gen.git
 
+      # Step 4: Copy your custom config and stage2
       - name: Copy custom config and stage2
         run: |
-          # Copy your config file if it exists in the repo root
+          # Copy config file from repo root if it exists
           if [ -f config ]; then cp config pi-gen/config; fi
-          # Copy your entire stage2 folder
+          # Copy your custom stage2 folder
           cp -r stage2 pi-gen/
 
+      # Step 5: Build the image
       - name: Build the image
         run: |
           cd pi-gen
@@ -37,6 +57,7 @@ jobs:
           #export ENABLE_SSH=1
           sudo bash build.sh
 
+      # Step 6: Upload the resulting .img file as an artifact
       - name: Upload image
         uses: actions/upload-artifact@v4
         with:
