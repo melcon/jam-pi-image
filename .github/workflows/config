@@ -1,4 +1,6 @@
 IMG_NAME='my-jamulus-image'
+TARGET_ARCH=arm64
+# or TARGET_ARCH=armhf for 32-bit
 FIRST_USER_NAME=pi
 FIRST_USER_PASS=jamulus
 ENABLE_SSH=1

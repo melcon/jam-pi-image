@@ -55,7 +55,7 @@ jobs:
           #export FIRST_USER_NAME=pi
           #export FIRST_USER_PASS=raspberry
           #export ENABLE_SSH=1
-          sudo bash build.sh
+          sudo bash -e build.sh
       
       - name: List deploy directory
         run: |
