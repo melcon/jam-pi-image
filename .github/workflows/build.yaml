@@ -56,6 +56,11 @@ jobs:
           #export FIRST_USER_PASS=raspberry
           #export ENABLE_SSH=1
           sudo bash build.sh
+      
+      - name: List deploy directory
+        run: |
+          ls -la pi-gen/deploy/ || echo "deploy directory does not exist"
+          find pi-gen -name "*.img" 2>/dev/null || echo "No .img files found"      
 
       # Step 6: Upload the resulting .img file as an artifact
       - name: Upload image
