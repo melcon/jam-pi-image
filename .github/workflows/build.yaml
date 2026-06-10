@@ -1,4 +1,4 @@
-name: Build Custom Raspberry Pi Image
+name: Build Custom Raspberry Pi Image (docker-based)
 
 on:
   push:
@@ -7,56 +7,85 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Step 1: Install all build dependencies for pi-gen
-      - name: Install pi-gen dependencies
+      - name: Build with pi-gen Docker container
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            coreutils quilt parted qemu-user-static debootstrap zerofree zip \
-            dosfstools libarchive-tools libcap2-bin grep rsync xz-utils file git curl bc \
-            arch-test
+          # Create a working directory
+          mkdir -p pi-gen-build
+          cp -r stage2 config pi-gen-build/ 2>/dev/null || true
+          cd pi-gen-build
 
-      # Step 2: Prepare binfmt_misc for ARM emulation
-      - name: Setup binfmt_misc for ARM
-        run: |
-          # Load the binfmt_misc kernel module if it's not already loaded
-          sudo modprobe binfmt_misc || true
-          # Mount the binfmt_misc filesystem if it's not already mounted
-          if ! mountpoint -q /proc/sys/fs/binfmt_misc; then
-            sudo mount binfmt_misc -t binfmt_misc /proc/sys/fs/binfmt_misc
+          # Create a minimal config if missing
+          if [ ! -f config ]; then
+            cat > config << 'EOF'
+IMG_NAME='jamulus-rpi4'
+TARGET_ARCH=arm64
+FIRST_USER_NAME=pi
+FIRST_USER_PASS=jamulus
+ENABLE_SSH=1
+TIMEZONE_DEFAULT="America/Sao_Paulo"
+KEYBOARD_KEYMAP="us"
+EOF
           fi
-          # Register the ARM interpreters with binfmt_misc
-          sudo update-binfmts --enable qemu-arm 2>/dev/null || true
-          sudo update-binfmts --enable qemu-aarch64 2>/dev/null || true
 
-      # Step 3: Clone pi-gen
-      - name: Clone pi-gen
-        run: git clone --depth 1 https://github.com/RPi-Distro/pi-gen.git
+          # Run pi-gen in Docker
+          docker run --privileged --rm \
+            -v $(pwd):/pi-gen \
+            -e IMG_NAME=$(grep IMG_NAME config | cut -d= -f2) \
+            -e FIRST_USER_NAME=pi \
+            -e FIRST_USER_PASS=jamulus \
+            -e ENABLE_SSH=1 \
+            ghcr.io/pi-gen/pi-gen:latest
 
-      # Step 4: Copy your custom config and stage2
-      - name: Copy custom config and stage2
-        run: |
-          # Copy config file from repo root if it exists
-          if [ -f config ]; then cp config pi-gen/config; fi
-          # Copy your custom stage2 folder
-          cp -r stage2 pi-gen/
-
-      # Step 5: Build the image
-      - name: Build the image
-        run: |
-          cd pi-gen
-          # Set environment variables (optional, can also be in config file)
-          #export IMG_NAME=my-jamulus-image
-          #export FIRST_USER_NAME=pi
-          #export FIRST_USER_PASS=raspberry
-          #export ENABLE_SSH=1
-          sudo bash -e build.sh
-      
+#      # Step 1: Install all build dependencies for pi-gen
+#      - name: Install pi-gen dependencies
+#        run: |
+#          sudo apt-get update
+#          sudo apt-get install -y \
+#            coreutils quilt parted qemu-user-static debootstrap zerofree zip \
+#            dosfstools libarchive-tools libcap2-bin grep rsync xz-utils file git curl bc \
+#            arch-test
+#
+#      # Step 2: Prepare binfmt_misc for ARM emulation
+#      - name: Setup binfmt_misc for ARM
+#        run: |
+#          # Load the binfmt_misc kernel module if it's not already loaded
+#          sudo modprobe binfmt_misc || true
+#          # Mount the binfmt_misc filesystem if it's not already mounted
+#          if ! mountpoint -q /proc/sys/fs/binfmt_misc; then
+#            sudo mount binfmt_misc -t binfmt_misc /proc/sys/fs/binfmt_misc
+#          fi
+#          # Register the ARM interpreters with binfmt_misc
+#          sudo update-binfmts --enable qemu-arm 2>/dev/null || true
+#          sudo update-binfmts --enable qemu-aarch64 2>/dev/null || true
+#
+#      # Step 3: Clone pi-gen
+#      - name: Clone pi-gen
+#        run: git clone --depth 1 https://github.com/RPi-Distro/pi-gen.git
+#
+#      # Step 4: Copy your custom config and stage2
+#      - name: Copy custom config and stage2
+#        run: |
+#          # Copy config file from repo root if it exists
+#          if [ -f config ]; then cp config pi-gen/config; fi
+#          # Copy your custom stage2 folder
+#          cp -r stage2 pi-gen/
+#
+#      # Step 5: Build the image
+#      - name: Build the image
+#        run: |
+#          cd pi-gen
+#          # Set environment variables (optional, can also be in config file)
+#          #export IMG_NAME=my-jamulus-image
+#          #export FIRST_USER_NAME=pi
+#          #export FIRST_USER_PASS=raspberry
+#          #export ENABLE_SSH=1
+#          sudo bash -e build.sh
+#      
       - name: List deploy directory
         run: |
           ls -la pi-gen/deploy/ || echo "deploy directory does not exist"
