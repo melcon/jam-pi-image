@@ -17,16 +17,17 @@ jobs:
           mkdir -p pi-gen-build
           # Copy existing stage2 if present
           if [ -d stage2 ]; then cp -r stage2 pi-gen-build/; fi
-          # Create config file (avoid heredoc)
-          cat > pi-gen-build/config <<CONFIG
-IMG_NAME='jamulus-rpi4'
-TARGET_ARCH=arm64
-FIRST_USER_NAME=pi
-FIRST_USER_PASS=jamulus
-ENABLE_SSH=1
-TIMEZONE_DEFAULT="America/Sao_Paulo"
-KEYBOARD_KEYMAP="us"
-CONFIG
+      
+      - name: Create config file
+        run: |
+          mkdir -p pi-gen-build
+          echo "IMG_NAME='jamulus-rpi4'" > pi-gen-build/config
+          echo "TARGET_ARCH=arm64" >> pi-gen-build/config
+          echo "FIRST_USER_NAME=pi" >> pi-gen-build/config
+          echo "FIRST_USER_PASS=jamulus" >> pi-gen-build/config
+          echo "ENABLE_SSH=1" >> pi-gen-build/config
+          echo "TIMEZONE_DEFAULT=\"America/Sao_Paulo\"" >> pi-gen-build/config
+          echo "KEYBOARD_KEYMAP=\"us\"" >> pi-gen-build/config
 
       - name: Run pi-gen in Docker
         run: |
