@@ -12,16 +12,13 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Build with pi-gen Docker container
+      - name: Prepare build directory and config
         run: |
-          # Create a working directory
           mkdir -p pi-gen-build
-          cp -r stage2 config pi-gen-build/ 2>/dev/null || true
-          cd pi-gen-build
-
-          # Create a minimal config if missing
-          if [ ! -f config ]; then
-            cat > config << 'EOF'
+          # Copy existing stage2 if present
+          if [ -d stage2 ]; then cp -r stage2 pi-gen-build/; fi
+          # Create config file (avoid heredoc)
+          cat > pi-gen-build/config <<CONFIG
 IMG_NAME='jamulus-rpi4'
 TARGET_ARCH=arm64
 FIRST_USER_NAME=pi
@@ -29,16 +26,13 @@ FIRST_USER_PASS=jamulus
 ENABLE_SSH=1
 TIMEZONE_DEFAULT="America/Sao_Paulo"
 KEYBOARD_KEYMAP="us"
-EOF
-          fi
+CONFIG
 
-          # Run pi-gen in Docker
+      - name: Run pi-gen in Docker
+        run: |
+          cd pi-gen-build
           docker run --privileged --rm \
             -v $(pwd):/pi-gen \
-            -e IMG_NAME=$(grep IMG_NAME config | cut -d= -f2) \
-            -e FIRST_USER_NAME=pi \
-            -e FIRST_USER_PASS=jamulus \
-            -e ENABLE_SSH=1 \
             ghcr.io/pi-gen/pi-gen:latest
 
 #      # Step 1: Install all build dependencies for pi-gen
